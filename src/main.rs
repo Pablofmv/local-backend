@@ -1,5 +1,6 @@
 mod routes;
 mod handlers;
+mod models;
 
 use handlers::*;
 use axum::{

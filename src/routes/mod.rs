@@ -1,0 +1,17 @@
+use axum::{
+    routing::{delete, get, post, put},
+    Router,
+};
+
+use crate::handlers::*;
+
+pub fn create_router() -> Router {
+
+    Router::new()
+        .route("/", get(home))
+        .route("/questions", get(list_questions))
+        .route("/questions", post(create_question))
+        .route("/questions/{id}", get(get_question))
+        .route("/questions/{id}", put(update_question))
+        .route("/questions/{id}", delete(delete_question))
+}

@@ -1,17 +1,30 @@
 use axum::{
-    extract::{Path, Json},
+    extract::{Path, Json, State},
     http::StatusCode,
     response::IntoResponse,
 };
 
-use crate::models::{CreateQuestion, Question};
+use crate::{
+    state::AppState,
+    models::{CreateQuestion, Question},
+};
 
 pub async fn home() -> &'static str {
     "WELCOME"
 }
 
-pub async fn list_questions() -> &'static str {
-    "Listing all questions"
+pub async fn list_questions(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Question>>,StatusCode> {
+    
+
+    let questions = state
+        .questions
+        .lock()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(questions.clone()))
+
 }
 
 pub async fn get_question(Path(id): Path<u64>) -> Result<String, StatusCode> {
@@ -23,33 +36,69 @@ pub async fn get_question(Path(id): Path<u64>) -> Result<String, StatusCode> {
 }
 
 pub async fn create_question(
-    Json(payload): Json<CreateQuestion>
-) -> Json<Question> {
+    State(state): State<AppState>,
+    Json(payload): Json<CreateQuestion>,
+) -> Result<Json<Question>,StatusCode> {
+    
+    let mut questions = state
+        .questions
+        .lock()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+
     let question = Question {
-        id: 1,
+        id: questions.len() as u64 + 1,
         title: payload.title,
         body: payload.body,
         category: payload.category
     };
 
-    Json(question)
+    questions.push(question.clone());
+
+    Ok(Json(question))
 }
 
 pub async fn update_question(
+    State(state): State<AppState>,
     Path(id): Path<u64>, 
     Json(payload): Json<CreateQuestion>
-    ) -> Json<Question> {
-    
-    let question = Question {
-        id,
-        title: payload.title,
-        body: payload.body,
-        category: payload.category,
-    };
+    ) -> Result<Json<Question>,StatusCode> {
 
-    Json(question)
+    let mut questions = state
+        .questions
+        .lock()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let question = questions
+        .iter_mut()
+        .find(|q| q.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    question.title = payload.title;
+    question.body = payload.body;
+    question.category = payload.category;
+
+    Ok(Json(question.clone()))
 }
 
-pub async fn delete_question(Path(id): Path<u64>) -> String {
-    format!("Question {id} deleted")
+pub async fn delete_question(
+    State(state): State<AppState>,
+    Path(id): Path<u64>,
+) -> Result<StatusCode, StatusCode> {
+
+    let mut questions = state
+        .questions
+        .lock()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let original_len = questions.len();
+
+    questions.retain(|q| q.id != id);
+
+    if questions.len() == original_len {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    Ok(StatusCode::NO_CONTENT)
+    
 }

@@ -3,9 +3,12 @@ use axum::{
     Router,
 };
 
-use crate::handlers::*;
+use crate::{
+    handlers::*,
+    state::AppState,
+};
 
-pub fn create_router() -> Router {
+pub fn create_router() -> Router<AppState> {
 
     Router::new()
         .route("/", get(home))

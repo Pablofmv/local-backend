@@ -6,8 +6,7 @@ mod state;
 use sqlx::postgres::PgPoolOptions;
 
 use std::{
-    env,
-    sync::{Arc, Mutex},
+    env
 };
 
 use crate::state::AppState;
@@ -17,7 +16,7 @@ async fn main() {
 
     dotenvy::dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").unwrap();
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     println!("{database_url}");
 
@@ -25,26 +24,24 @@ async fn main() {
         .max_connections(5)
         .connect(&database_url)
         .await
-        .unwrap();
+        .expect("Failed to connect to PostgreSQL");
 
     println!("Connected to PostgreSQL successfully");
 
-    let _ = &pool;
-
     let state = AppState {
-        questions: Arc::new(Mutex::new(Vec::new())),
+        pool,
     };
     
     let app = routes::create_router().with_state(state);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
-        .unwrap();
+        .expect("Faailed to bind server address");
 
     println!("LOCAL server running at http//127.0.0.1:3000");
 
     axum::serve(listener, app)
         .await
-        .unwrap();
+        .expect("Server Failed");
 
 }

@@ -8,10 +8,14 @@ pub struct CreateQuestion {
 }
 
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Question {
-    pub id: u64,
+    pub id: i32,
+    pub user_id: i32,
     pub title: String,
     pub body: String,
     pub category: String,
+    pub community: String,
+    pub region: String,
+    pub state: String,
 }

@@ -19,3 +19,20 @@ pub struct Question {
     pub region: String,
     pub state: String,
 }
+
+
+#[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct User {
+    pub id: i32,
+    pub email: String,
+    pub nickanme: String,
+    pub password_hash:String,
+}
+
+
+#[derive(Clone,Deserialize)]
+pub struct CreateUser {
+    pub email: String,
+    pub nickname: String,
+    pub passowrd: String,
+}

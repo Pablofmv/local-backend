@@ -6,7 +6,7 @@ use serde_json::error;
 
 use crate::{
     state::AppState,
-    models::{CreateQuestion, Question},
+    models::{CreateQuestion, Question, User, CreateUser},
 };
 
 pub async fn home() -> &'static str {
@@ -192,3 +192,43 @@ pub async fn delete_question(
     
 }
 
+pub async fn create_user(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateUser>,
+) -> Result<Json<User>,StatusCode>
+{
+    let user = sqlx::query_as::<_, User>(
+        r#"
+        INSERT INTO users (
+            email,
+            nickname,
+            password_hash
+        )
+        VALUES($1,$2,$3)
+        RETURNING
+            id,
+            email,
+            nickname,
+            password_hash
+        "#,
+    )
+    .bind(payload.email)
+    .bind(payload.nickname)
+    .bind(payload.password)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|error|{
+
+        if let sqlx::Error::Database(database_error) = &error {
+            if database_error.code().as_deref() == Some("23505") {
+                return StatusCode::CONFLICT;
+            }
+        }
+        
+
+        eprintln!("failed to create user in PostgreSQL: {error}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(Json(user))
+}

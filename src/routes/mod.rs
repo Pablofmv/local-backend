@@ -17,4 +17,5 @@ pub fn create_router() -> Router<AppState> {
         .route("/questions/{id}", get(get_question))
         .route("/questions/{id}", put(update_question))
         .route("/questions/{id}", delete(delete_question))
+        .route("/users", post(create_user))
 }

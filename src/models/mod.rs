@@ -25,7 +25,7 @@ pub struct Question {
 pub struct User {
     pub id: i32,
     pub email: String,
-    pub nickanme: String,
+    pub nickname: String,
     pub password_hash:String,
 }
 
@@ -34,5 +34,5 @@ pub struct User {
 pub struct CreateUser {
     pub email: String,
     pub nickname: String,
-    pub passowrd: String,
+    pub password: String,
 }

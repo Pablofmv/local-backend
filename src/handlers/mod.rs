@@ -1,3 +1,13 @@
+use argon2::{
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHasher,
+        SaltString,
+    },
+    Argon2,
+};
+
+
 use axum::{
     extract::{Path, Json, State},
     http::StatusCode
@@ -6,7 +16,7 @@ use serde_json::error;
 
 use crate::{
     state::AppState,
-    models::{CreateQuestion, Question, User, CreateUser},
+    models::{CreateQuestion, Question, User, CreateUser, UserResponse},
 };
 
 pub async fn home() -> &'static str {
@@ -195,8 +205,19 @@ pub async fn delete_question(
 pub async fn create_user(
     State(state): State<AppState>,
     Json(payload): Json<CreateUser>,
-) -> Result<Json<User>,StatusCode>
-{
+) -> Result<Json<UserResponse>,StatusCode>
+{   
+
+    let salt = SaltString::generate(&mut OsRng);
+
+    let password_hash = Argon2::default()
+    .hash_password(payload.password.as_bytes(), &salt)
+    .map_err(|error| {
+        eprintln!("Failted to hash password: {error}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .to_string();
+
     let user = sqlx::query_as::<_, User>(
         r#"
         INSERT INTO users (
@@ -214,7 +235,7 @@ pub async fn create_user(
     )
     .bind(payload.email)
     .bind(payload.nickname)
-    .bind(payload.password)
+    .bind(password_hash)
     .fetch_one(&state.pool)
     .await
     .map_err(|error|{
@@ -230,5 +251,11 @@ pub async fn create_user(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    Ok(Json(user))
+    let response = UserResponse {
+        id: user.id,
+        email: user.email,
+        nickname: user.nickname,
+    };
+
+    Ok(Json(response))
 }

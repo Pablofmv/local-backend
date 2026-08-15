@@ -36,3 +36,12 @@ pub struct CreateUser {
     pub nickname: String,
     pub password: String,
 }
+
+
+
+#[derive(Clone, Serialize)]
+pub struct UserResponse {
+    pub id: i32,
+    pub email: String,
+    pub nickname: String,
+}

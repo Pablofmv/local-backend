@@ -45,3 +45,15 @@ pub struct UserResponse {
     pub email: String,
     pub nickname: String,
 }
+
+#[derive(Clone, Deserialize)]
+pub struct LoginRequest {
+    pub email: String,
+    pub password: String,
+}
+
+
+#[derive(Clone, Serialize)]
+pub struct LoginResponse {
+    pub token: String,
+}

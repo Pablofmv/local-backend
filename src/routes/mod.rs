@@ -18,4 +18,6 @@ pub fn create_router() -> Router<AppState> {
         .route("/questions/{id}", put(update_question))
         .route("/questions/{id}", delete(delete_question))
         .route("/users", post(create_user))
-}
+        .route("/login",post(login))
+        .route("/logout",post(logout))
+    }
